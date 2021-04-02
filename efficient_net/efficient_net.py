@@ -36,7 +36,7 @@ class CNNBlock(nn.Module):
             kernel_size,
             stride,
             padding,
-            groups=groups,
+            groups=groups,  # if groups = in_channels, it is a Depthwise conv
             bias=False,
         )
         self.bn = nn.BatchNorm2d(out_channels)
@@ -87,12 +87,15 @@ class InvertedResidualBlock(nn.Module):
             CNNBlock(
                 hidden_dim, hidden_dim, kernel_size, stride, padding, groups=hidden_dim,
             ),
-            SqueezeExcitation(hidden_dim, reduced_dim),
+            SqueezeExcitation(hidden_dim, reduced_dim),  # Better weighting of which channels should be prioritized (attention score for each channels)
             nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
             nn.BatchNorm2d(out_channels),
         )
 
     def stochastic_depth(self, x):
+        """
+        randomly remove a certain layer only in training
+        """
         if not self.training:
             return x
 
